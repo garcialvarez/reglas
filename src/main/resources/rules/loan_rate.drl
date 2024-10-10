@@ -118,5 +118,21 @@ rule "Educational loan for young adults" //8
         rate.setLoanStatus("Approved");
         rate.setLoanRate(2.50);
         offer.setProduct("Revolving Credit");
-        offer.setLimit(10000); // Ofrecer crédito rotativo adicional para cubrir otros gastos
+        offer.setLimit(10000);
+    end
+
+rule "Loan approval for home purchase" //9
+    when
+        Participant(loanPurpose == "Home Purchase", creditScore >= 700, annualSalary > 60000)
+    then
+        rate.setLoanStatus("Approved");
+        rate.setLoanRate(3.50);
+    end
+
+rule "Preferred rate for car purchase with good credit score"
+    when
+        Participant(loanPurpose == "Car Purchase", creditScore >= 680, annualSalary > 40000)
+    then
+        rate.setLoanStatus("Approved");
+        rate.setLoanRate(4.25);
     end
