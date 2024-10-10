@@ -1,0 +1,122 @@
+import com.udea.reglas.model.Participant;
+global com.udea.reglas.model.Rate rate;
+global com.udea.reglas.model.Offer offer;
+
+dialect "mvel"
+
+rule "Checking Existing Debt Against Lean Amount"
+    when
+        Participant(loanAmount > (2 * existingDebt))
+    then
+        rate.setLoanStatus("Rejected - Too Much Debt");
+        rate.setLoanRate(999);
+    end
+
+rule "Checking Annual Salary is greater than 50000"
+    when
+        Participant(annualSalary <= 50000)
+    then
+        rate.setLoanStatus("Rejected - Too low salary");
+        rate.setLoanRate(999);
+    end
+
+rule "Checking Credit Score less than 550"
+    when
+        Participant(creditScore < 550, annualSalary > 50000, loanAmount < (2 * existingDebt))
+    then
+        rate.setLoanStatus("Rejected");
+        rate.setLoanRate(999);
+    end
+
+rule "Checking Credit Score less than 650"
+    when
+        Participant(creditScore < 650 && creditScore >=550, annualSalary > 50000, loanAmount < (2 * existingDebt))
+    then
+        rate.setLoanStatus("Approved");
+        rate.setLoanRate(7.25);
+    end
+
+rule "Checking Credit Score less than 750"
+    when
+        Participant(creditScore < 750 && creditScore >=650, annualSalary > 50000, loanAmount < (2 * existingDebt))
+    then
+        rate.setLoanStatus("Approved");
+        rate.setLoanRate(6.25);
+    end
+
+rule "Checking Credit Score greater than 750"
+    when
+        Participant(creditScore >= 750, annualSalary > 50000, loanAmount < (2 * existingDebt))
+    then
+        rate.setLoanStatus("Approved");
+        rate.setLoanRate(5.25);
+    end
+
+// 10 reglas más
+
+rule "Reject if underage" //1
+    when
+        Participant(age < 18)
+    then
+        rate.setLoanStatus("Rejected");
+        rate.setLoanRate(999);
+    end
+
+rule "Preferential rate for young adults" //2
+    when
+        Participant(age >= 18 && age <= 25, creditScore >= 650, annualSalary > 30000)
+    then
+        rate.setLoanStatus("Approved");
+        rate.setLoanRate(4.50);
+    end
+
+rule "Preferred rate for high socioeconomic stratum" //3
+    when
+        Participant(stratum == 5 || stratum == 6, creditScore >= 700, annualSalary > 80000)
+    then
+        rate.setLoanStatus("Approved");
+        rate.setLoanRate(3.50);
+    end
+
+rule "Higher rate for low socioeconomic stratum" //4
+    when
+        Participant(stratum == 1 || stratum == 2, loanAmount < (2 * existingDebt))
+    then
+        rate.setLoanRate(7.25);
+    end
+
+rule "Credit card offer for young adults" //5
+    when
+        Participant(age >= 18 && age <= 25, creditScore >= 650)
+    then
+        offer.setProduct("Credit Card");
+        offer.setLimit(1000);
+    end
+
+rule "Credit card offer for parents" //6
+    when
+        Participant(hasChildren == true, annualSalary > 50000, creditScore >= 600)
+    then
+        offer.setProduct("Credit Card");
+        offer.setLimit(5000);
+    end
+
+rule "Bonus for first-time loan applicants" //7
+    when
+        Participant(hasPreviousLoans == false, creditScore >= 600, loanAmount <= 10000)
+    then
+        rate.setLoanStatus("Approved");
+        rate.setLoanRate(3.90);
+        offer.setProduct("Credit Card");
+        offer.setLimit(5000);
+    end
+
+rule "Educational loan for young adults" //8
+    when
+        Participant(age >= 18 && age <= 25, loanPurpose == "Education", creditScore >= 550)
+    then
+        rate.setLoanStatus("Approved");
+        rate.setLoanRate(2.50);
+        offer.setProduct("Revolving Credit");
+        offer.setLimit(10000); // Ofrecer crédito rotativo adicional para cubrir otros gastos
+    end
